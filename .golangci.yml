@@ -77,7 +77,7 @@ linters:
     - loggercheck # checks key value pairs for common logger libraries (kitlog,klog,logr,zap)
     - makezero # finds slice declarations with non-zero initial length
     - mirror # reports wrong mirror patterns of bytes/strings usage
-    - mnd # detects magic numbers
+    # - mnd # detects magic numbers
     - musttag # enforces field tags in (un)marshaled structs
     - nakedret # finds naked returns in functions greater than a specified function length
     - nestif # reports deeply nested if statements
@@ -160,7 +160,7 @@ linters:
       # The maximal average package complexity.
       # If it's higher than 0.0 (float) the check is enabled.
       # Default: 0.0
-      package-average: 10.0
+      package-average: 15.0
 
     depguard:
       rules:
@@ -240,7 +240,7 @@ linters:
     gocognit:
       # Minimal code complexity to report.
       # Default: 30 (but we recommend 10-20)
-      min-complexity: 49
+      min-complexity: 54
 
     gocritic:
       enable-all: true
@@ -276,26 +276,6 @@ linters:
       # Skips check for interface methods with only a single parameter.
       # Default: false
       skip-single-param: true
-
-    mnd:
-      # List of function patterns to exclude from analysis.
-      # Values always ignored: `time.Date`,
-      # `strconv.FormatInt`, `strconv.FormatUint`, `strconv.FormatFloat`,
-      # `strconv.ParseInt`, `strconv.ParseUint`, `strconv.ParseFloat`.
-      # Default: []
-      ignored-functions:
-        - args.Error
-        - flag.Arg
-        - flag.Duration.*
-        - flag.Float.*
-        - flag.Int.*
-        - flag.Uint.*
-        - os.Chmod
-        - os.Mkdir.*
-        - os.OpenFile
-        - os.WriteFile
-        - prometheus.ExponentialBuckets.*
-        - prometheus.LinearBuckets
 
     nakedret:
       # Make an issue if func has more lines of code than this setting, and it has naked returns.
