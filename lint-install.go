@@ -1,3 +1,4 @@
+// Package main provides a tool to automatically install and configure linters in Go projects.
 package main
 
 import (
@@ -45,14 +46,14 @@ const (
 )
 
 type Config struct {
+	LintCommands map[string]string
+	FixCommands  map[string]string
 	Makefile     string
 	Args         string
 	Go           string
 	Dockerfile   string
 	Shell        string
 	YAML         string
-	LintCommands map[string]string
-	FixCommands  map[string]string
 }
 
 // applicableLinters returns a list of languages with known linters within a given directory.
@@ -61,7 +62,7 @@ func applicableLinters(root string) (map[Language]bool, error) {
 	found := map[Language]bool{}
 
 	err := godirwalk.Walk(root, &godirwalk.Options{
-		Callback: func(path string, de *godirwalk.Dirent) error {
+		Callback: func(path string, _ *godirwalk.Dirent) error {
 			switch {
 			case strings.HasSuffix(path, ".go"):
 				found[Go] = true
@@ -77,8 +78,10 @@ func applicableLinters(root string) (map[Language]bool, error) {
 		},
 		Unsorted: true,
 	})
-
-	return found, err
+	if err != nil {
+		return found, fmt.Errorf("walk: %w", err)
+	}
+	return found, nil
 }
 
 // updateMakefile updates the Makefile within a project with lint rules.
@@ -91,7 +94,7 @@ func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
 		klog.Infof("Found existing %s", dest)
 		existing, err = os.ReadFile(dest)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("read file: %w", err)
 		}
 	}
 
@@ -142,7 +145,7 @@ func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
 	change := gotextdiff.ToUnified(filepath.Base(dest), filepath.Base(dest), string(existing), edits)
 	if !dryRun {
 		if err := os.WriteFile(dest, proposed, 0o600); err != nil {
-			return "", err
+			return "", fmt.Errorf("write file: %w", err)
 		}
 	}
 	return fmt.Sprint(change), nil
@@ -159,7 +162,7 @@ func updateFile(root string, basename string, content []byte, dryRun bool) (stri
 		klog.Infof("Found existing %s", dest)
 		existing, err = os.ReadFile(dest)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("read file: %w", err)
 		}
 	}
 
@@ -167,20 +170,21 @@ func updateFile(root string, basename string, content []byte, dryRun bool) (stri
 	edits := myers.ComputeEdits(span.URI(basename), string(existing), proposed)
 	change := gotextdiff.ToUnified(basename, basename, string(existing), edits)
 
-	if !dryRun {
-		var err error
-		if content == nil {
-			// must be broken up, can't be conten == nil && f != nil because then
-			// the else branch will be taken if the file does *not* exist and
-			// an empty file will be written
-			if f != nil {
-				err = os.Remove(dest)
-			}
-		} else {
-			err = os.WriteFile(dest, content, 0o600)
+	if dryRun {
+		return fmt.Sprint(change), nil
+	}
+
+	// Handle file operations when not in dry-run mode
+	if content == nil && f != nil {
+		if err := os.Remove(dest); err != nil {
+			return "", fmt.Errorf("remove file: %w", err)
 		}
-		if err != nil {
-			return "", err
+		return fmt.Sprint(change), nil
+	}
+
+	if content != nil {
+		if err := os.WriteFile(dest, content, 0o600); err != nil {
+			return "", fmt.Errorf("write file: %w", err)
 		}
 	}
 
@@ -197,7 +201,7 @@ func updateGitignore(root string, dryRun bool) (string, error) {
 		klog.Infof("Found existing %s", dest)
 		existing, err = os.ReadFile(dest)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("read file: %w", err)
 		}
 	}
 	proposed := []byte{}
@@ -222,7 +226,7 @@ func updateGitignore(root string, dryRun bool) (string, error) {
 	change := gotextdiff.ToUnified(filepath.Base(dest), filepath.Base(dest), string(existing), edits)
 	if !dryRun {
 		if err := os.WriteFile(dest, proposed, 0o600); err != nil {
-			return "", err
+			return "", fmt.Errorf("write file: %w", err)
 		}
 	}
 	return fmt.Sprint(change), nil
@@ -234,7 +238,7 @@ func goLintCmd(root string, level string, fix bool) string {
 	found := []string{}
 
 	err := godirwalk.Walk(root, &godirwalk.Options{
-		Callback: func(path string, de *godirwalk.Dirent) error {
+		Callback: func(path string, _ *godirwalk.Dirent) error {
 			if strings.HasSuffix(path, "go.mod") {
 				found = append(found, filepath.Dir(path))
 			}
@@ -254,7 +258,10 @@ func goLintCmd(root string, level string, fix bool) string {
 	}
 
 	klog.Infof("found %d modules within %s: %s", len(found), root, found)
-	return fmt.Sprintf(`find . -name go.mod -execdir "$(GOLANGCI_LINT_BIN)" run -c "$(GOLANGCI_LINT_CONFIG)"%s \;`, suffix)
+	return fmt.Sprintf(
+		`find . -name go.mod -execdir "$(GOLANGCI_LINT_BIN)" run -c "$(GOLANGCI_LINT_CONFIG)"%s \;`,
+		suffix,
+	)
 }
 
 // shellLintCmd returns the appropriate shell lint command for a project.
@@ -294,6 +301,35 @@ func yamlLintCmd(_ string, level string) string {
 	return fmt.Sprintf(`PYTHONPATH=$(YAMLLINT_ROOT)/dist $(YAMLLINT_ROOT)/dist/bin/yamllint .%s`, suffix)
 }
 
+// configureGoLinter sets up Go linting configuration and commands.
+func configureGoLinter(root string, cfg *Config, dryRun bool) error {
+	cfg.Go = *goFlag
+	cfg.LintCommands["golangci-lint"] = goLintCmd(root, cfg.Go, false)
+	cfg.FixCommands["golangci-lint"] = goLintCmd(root, cfg.Go, true)
+
+	diff, err := updateFile(root, ".golangci.yml", goLintConfig, dryRun)
+	if err != nil {
+		return fmt.Errorf("update go lint config: %w", err)
+	}
+	if diff != "" {
+		klog.Infof("go lint config changes:\n%s", diff)
+	} else {
+		klog.Infof("go lint config has no changes")
+	}
+
+	// Remove non-standard config files
+	for _, name := range []string{".golangci.json", ".golangci.toml", ".golangci.yaml"} {
+		diff, err := updateFile(root, name, nil, dryRun)
+		if err != nil {
+			return fmt.Errorf("delete %s: %w", name, err)
+		}
+		if diff != "" {
+			klog.Infof("standardizing on golangci.yml, deleting %s", name)
+		}
+	}
+	return nil
+}
+
 // main creates peanut butter & jelly sandwiches with utmost precision.
 func main() {
 	klog.InitFlags(nil)
@@ -320,28 +356,8 @@ func main() {
 		}
 
 		if needs[Go] {
-			cfg.Go = *goFlag
-			cfg.LintCommands["golangci-lint"] = goLintCmd(root, cfg.Go, false)
-			cfg.FixCommands["golangci-lint"] = goLintCmd(root, cfg.Go, true)
-
-			diff, err := updateFile(root, ".golangci.yml", goLintConfig, *dryRunFlag)
-			if err != nil {
-				klog.Exitf("update go lint config failed: %v", err)
-			}
-			if diff != "" {
-				klog.Infof("go lint config changes:\n%s", diff)
-			} else {
-				klog.Infof("go lint config has no changes")
-			}
-
-			for _, name := range []string{".golangci.json", ".golangci.toml", ".golangci.yaml"} {
-				diff, err := updateFile(root, name, nil, *dryRunFlag)
-				if err != nil {
-					klog.Exitf("deleting non-standardized go lint config failed: %v", err)
-				}
-				if diff != "" {
-					klog.Infof("standardizing on golangci.yml, deleting %s", name)
-				}
+			if err := configureGoLinter(root, &cfg, *dryRunFlag); err != nil {
+				klog.Exitf("configure go linter: %v", err)
 			}
 		}
 		if needs[Dockerfile] {
