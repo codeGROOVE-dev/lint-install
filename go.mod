@@ -1,4 +1,4 @@
-module github.com/tinkerbell/lint-install
+module github.com/codeGROOVE-dev/lint-install
 
 go 1.22
 
