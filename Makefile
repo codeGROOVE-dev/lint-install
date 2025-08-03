@@ -1,6 +1,6 @@
 
 # BEGIN: lint-install .
-# http://github.com/tinkerbell/lint-install
+# http://github.com/codeGROOVE-dev/lint-install
 
 .PHONY: lint
 lint: _lint
