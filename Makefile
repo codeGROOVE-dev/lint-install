@@ -40,7 +40,7 @@ FIXERS += shellcheck-fix
 shellcheck-fix: $(SHELLCHECK_BIN)
 	$(SHELLCHECK_BIN) $(shell find . -name "*.sh") -f diff | { read -t 1 line || exit 0; { echo "$$line" && cat; } | git apply -p2; }
 
-HADOLINT_VERSION ?= v2.10.0
+HADOLINT_VERSION ?= v2.12.1-beta
 HADOLINT_BIN := $(LINT_ROOT)/out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 $(HADOLINT_BIN):
 	mkdir -p $(LINT_ROOT)/out/linters
@@ -54,7 +54,7 @@ hadolint-lint: $(HADOLINT_BIN)
 	$(HADOLINT_BIN) $(shell find . -name "*Dockerfile")
 
 GOLANGCI_LINT_CONFIG := $(LINT_ROOT)/.golangci.yml
-GOLANGCI_LINT_VERSION ?= v1.50.0
+GOLANGCI_LINT_VERSION ?= v2.3.1
 GOLANGCI_LINT_BIN := $(LINT_ROOT)/out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)
 $(GOLANGCI_LINT_BIN):
 	mkdir -p $(LINT_ROOT)/out/linters

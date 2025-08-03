@@ -1,6 +1,6 @@
 module github.com/tinkerbell/lint-install
 
-go 1.18
+go 1.22
 
 require (
 	github.com/hexops/gotextdiff v1.0.3
