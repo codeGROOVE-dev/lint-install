@@ -43,7 +43,6 @@ linters:
     - godox # TODO's are OK
     - ireturn # It's OK
     - musttag
-    - godot # dubious
     - nonamedreturns
     - goconst # finds repeated strings that could be replaced by a constant
     - goheader # checks is file header matches to pattern
@@ -140,6 +139,9 @@ linters:
     govet:
       enable-all: true
 
+    godot:
+      scope: toplevel
+
     inamedparam:
       # Skips check for interface methods with only a single parameter.
       skip-single-param: true
@@ -223,6 +225,7 @@ linters:
         linters:
           - dupl
           - gosec
+          - godot
           - noctx
           - perfsprint
           - revive
