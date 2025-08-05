@@ -67,8 +67,7 @@ lint-install -dry-run .
 ## What Gets Added
 
 - **Makefile targets**: `lint`, `lint-<language>`, `lint-install`
-- **Config files**: `.golangci.yml`, `.hadolint.yaml`, `.yamllint`
-- **Version files**: `.*.version` for reproducible builds
+- **Config files**: `.golangci.yml`, `.yamllint`
 - **Linter binaries**: `./out/linters/` (git-ignored)
 
 ## Contributing
