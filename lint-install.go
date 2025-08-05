@@ -72,6 +72,7 @@ func applicableLinters(root string) (map[Language]bool, error) {
 				found[Shell] = true
 			case strings.HasSuffix(path, ".yml"), strings.HasSuffix(path, ".yaml"):
 				found[YAML] = true
+			default:
 			}
 
 			return nil

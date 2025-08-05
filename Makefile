@@ -20,7 +20,7 @@ endif
 LINTERS :=
 FIXERS :=
 
-SHELLCHECK_VERSION ?= v0.8.0
+SHELLCHECK_VERSION ?= v0.10.0
 SHELLCHECK_BIN := $(LINT_ROOT)/out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
 $(SHELLCHECK_BIN):
 	mkdir -p $(LINT_ROOT)/out/linters
@@ -70,7 +70,7 @@ FIXERS += golangci-lint-fix
 golangci-lint-fix: $(GOLANGCI_LINT_BIN)
 	find . -name go.mod -execdir "$(GOLANGCI_LINT_BIN)" run -c "$(GOLANGCI_LINT_CONFIG)" --fix \;
 
-YAMLLINT_VERSION ?= 1.27.1
+YAMLLINT_VERSION ?= 1.37.1
 YAMLLINT_ROOT := $(LINT_ROOT)/out/linters/yamllint-$(YAMLLINT_VERSION)
 YAMLLINT_BIN := $(YAMLLINT_ROOT)/dist/bin/yamllint
 $(YAMLLINT_BIN):
