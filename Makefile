@@ -1,3 +1,8 @@
+.PHONY: test
+test:
+	@echo "Running integration tests..."
+	@chmod +x $(LINT_ROOT)/test/run_tests.sh
+	@$(LINT_ROOT)/test/run_tests.sh
 
 # BEGIN: lint-install .
 # http://github.com/codeGROOVE-dev/lint-install
@@ -124,11 +129,5 @@ fix:
 		$(MAKE) $$target || exit_code=1; \
 	done; \
 	exit $$exit_code
-
-.PHONY: test
-test:
-	@echo "Running integration tests..."
-	@chmod +x $(LINT_ROOT)/test/run_tests.sh
-	@$(LINT_ROOT)/test/run_tests.sh
 
 # END: lint-install .
