@@ -24,6 +24,7 @@ var (
 	shellFlag      = flag.String("shell", "error", "Level to lint Shell with: [ignore, warn, error]")
 	dockerfileFlag = flag.String("dockerfile", "error", "Level to lint Dockerfile with: [ignore, warn, error]")
 	yamlFlag       = flag.String("yaml", "error", "Level to lint YAML with: [ignore, warn, error]")
+	webFlag        = flag.String("web", "error", "Level to lint Web files (JS/TS/HTML/CSS/JSON) with: [ignore, warn, error]")
 	makeFileName   = flag.String("makefile", "Makefile", "name of Makefile to update")
 
 	//go:embed .golangci.yml
@@ -31,6 +32,9 @@ var (
 
 	//go:embed .yamllint
 	yamlLintConfig []byte
+
+	//go:embed biome.json
+	biomeLintConfig []byte
 
 	//go:embed Makefile.tmpl
 	makeTmpl string
@@ -43,6 +47,7 @@ const (
 	Shell
 	Dockerfile
 	YAML
+	Web
 )
 
 type Config struct {
@@ -54,6 +59,7 @@ type Config struct {
 	Dockerfile   string
 	Shell        string
 	YAML         string
+	Web          string
 }
 
 // applicableLinters returns a list of languages with known linters within a given directory.
@@ -72,6 +78,11 @@ func applicableLinters(root string) (map[Language]bool, error) {
 				found[Shell] = true
 			case strings.HasSuffix(path, ".yml"), strings.HasSuffix(path, ".yaml"):
 				found[YAML] = true
+			case strings.HasSuffix(path, ".js"), strings.HasSuffix(path, ".jsx"),
+				strings.HasSuffix(path, ".ts"), strings.HasSuffix(path, ".tsx"),
+				strings.HasSuffix(path, ".json"), strings.HasSuffix(path, ".html"),
+				strings.HasSuffix(path, ".css"):
+				found[Web] = true
 			default:
 			}
 
@@ -302,6 +313,21 @@ func yamlLintCmd(_ string, level string) string {
 	return fmt.Sprintf(`PYTHONPATH=$(YAMLLINT_ROOT)/dist $(YAMLLINT_ROOT)/dist/bin/yamllint .%s`, suffix)
 }
 
+// biomeLintCmd returns the appropriate biome lint command for a project.
+func biomeLintCmd(_ string, level string, fix bool) string {
+	cmd := "check"
+	if fix {
+		cmd = "check --write"
+	}
+
+	suffix := ""
+	if level == "warn" {
+		suffix = " || true"
+	}
+
+	return fmt.Sprintf(`$(BIOME_BIN) %s --config-path=$(BIOME_CONFIG) .%s`, cmd, suffix)
+}
+
 // configureGoLinter sets up Go linting configuration and commands.
 func configureGoLinter(root string, cfg *Config, dryRun bool) error {
 	cfg.Go = *goFlag
@@ -327,6 +353,24 @@ func configureGoLinter(root string, cfg *Config, dryRun bool) error {
 		if diff != "" {
 			klog.Infof("standardizing on golangci.yml, deleting %s", name)
 		}
+	}
+	return nil
+}
+
+// configureBiomeLinter sets up Biome linting configuration and commands.
+func configureBiomeLinter(root string, cfg *Config, dryRun bool) error {
+	cfg.Web = *webFlag
+	cfg.LintCommands["biome"] = biomeLintCmd(root, cfg.Web, false)
+	cfg.FixCommands["biome"] = biomeLintCmd(root, cfg.Web, true)
+
+	diff, err := updateFile(root, "biome.json", biomeLintConfig, dryRun)
+	if err != nil {
+		return fmt.Errorf("update biome config: %w", err)
+	}
+	if diff != "" {
+		klog.Infof("biome config changes:\n%s", diff)
+	} else {
+		klog.Infof("biome config has no changes")
 	}
 	return nil
 }
@@ -382,6 +426,11 @@ func main() {
 				klog.Infof("yamllint config changes:\n%s", diff)
 			} else {
 				klog.Infof("yamllint config has no changes")
+			}
+		}
+		if needs[Web] {
+			if err := configureBiomeLinter(root, &cfg, *dryRunFlag); err != nil {
+				klog.Exitf("configure biome linter: %v", err)
 			}
 		}
 
