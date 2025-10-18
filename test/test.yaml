@@ -1,0 +1,10 @@
+---
+# Test YAML with intentional yamllint issues
+key1:  value1
+  key2: value2
+key3:
+  - item1
+  - item2
+      - nested_badly
+key4: "trailing whitespace here "
+very_long_line_that_exceeds_the_normal_line_length_limit_and_should_be_flagged_by_yamllint_as_too_long: true

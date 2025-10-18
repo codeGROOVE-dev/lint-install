@@ -125,4 +125,10 @@ fix:
 	done; \
 	exit $$exit_code
 
+.PHONY: test
+test:
+	@echo "Running integration tests..."
+	@chmod +x $(LINT_ROOT)/test/run_tests.sh
+	@$(LINT_ROOT)/test/run_tests.sh
+
 # END: lint-install .
