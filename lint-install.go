@@ -80,8 +80,7 @@ func applicableLinters(root string) (map[Language]bool, error) {
 				found[YAML] = true
 			case strings.HasSuffix(path, ".js"), strings.HasSuffix(path, ".jsx"),
 				strings.HasSuffix(path, ".ts"), strings.HasSuffix(path, ".tsx"),
-				strings.HasSuffix(path, ".json"), strings.HasSuffix(path, ".html"),
-				strings.HasSuffix(path, ".css"):
+				strings.HasSuffix(path, ".html"), strings.HasSuffix(path, ".css"):
 				found[Web] = true
 			default:
 			}
