@@ -34,6 +34,7 @@ make lint
 - **Shell** - shellcheck
 - **Dockerfile** - hadolint
 - **YAML** - yamllint
+- **Web** (JS/TS/HTML/CSS/JSON) - biome
 
 ## Usage Examples
 
@@ -43,7 +44,7 @@ lint-install .
 make lint
 
 # Only Go and Shell linters
-lint-install -dockerfile=ignore -yaml=ignore .
+lint-install -dockerfile=ignore -yaml=ignore -web=ignore .
 
 # Preview changes
 lint-install -dry-run .
@@ -60,6 +61,7 @@ lint-install -dry-run .
 -go string          Go linting: [ignore, warn, error] (default "error")
 -shell string       Shell linting: [ignore, warn, error] (default "error")
 -yaml string        YAML linting: [ignore, warn, error] (default "error")
+-web string         Web linting (JS/TS/HTML/CSS/JSON): [ignore, warn, error] (default "error")
 -dry-run            Preview changes without applying
 -makefile string    Makefile name (default "Makefile")
 ```
@@ -67,7 +69,10 @@ lint-install -dry-run .
 ## What Gets Added
 
 - **Makefile targets**: `lint`, `lint-<language>`, `lint-install`
-- **Config files**: `.golangci.yml`, `.yamllint`
+- **Config files**: Only for languages detected in your project
+  - `.golangci.yml` (Go files)
+  - `.yamllint` (YAML files)
+  - `biome.json` (JS/TS/HTML/CSS/JSON files)
 - **Linter binaries**: `./out/linters/` (git-ignored)
 
 ## Contributing
