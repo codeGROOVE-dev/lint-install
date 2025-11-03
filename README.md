@@ -19,6 +19,9 @@ lint-install .
 
 # Run linters
 make lint
+
+# Auto-fix issues
+make fix
 ```
 
 ## Why Use It?
@@ -43,32 +46,17 @@ make lint
 lint-install .
 make lint
 
-# Only Go and Shell linters
-lint-install -dockerfile=ignore -yaml=ignore -web=ignore .
-
-# Preview changes
-lint-install -dry-run .
+# Auto-fix all fixable issues
+make fix
 
 # CI/CD (GitHub Actions)
 - run: make lint-install
 - run: make lint
 ```
 
-## Command Options
-
-```
--dockerfile string   Dockerfile linting: [ignore, warn, error] (default "error")
--go string          Go linting: [ignore, warn, error] (default "error")
--shell string       Shell linting: [ignore, warn, error] (default "error")
--yaml string        YAML linting: [ignore, warn, error] (default "error")
--web string         Web linting (JS/TS/HTML/CSS/JSON): [ignore, warn, error] (default "error")
--dry-run            Preview changes without applying
--makefile string    Makefile name (default "Makefile")
-```
-
 ## What Gets Added
 
-- **Makefile targets**: `lint`, `lint-<language>`, `lint-install`
+- **Makefile targets**: `lint`, `fix`, `lint-<language>`, `lint-install`
 - **Config files**: Only for languages detected in your project
   - `.golangci.yml` (Go files)
   - `.yamllint` (YAML files)
