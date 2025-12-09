@@ -21,7 +21,7 @@ LINTERS :=
 FIXERS :=
 
 {{ if .Shell -}}
-SHELLCHECK_VERSION ?= v0.10.0
+SHELLCHECK_VERSION ?= v0.11.0
 SHELLCHECK_BIN := $(LINT_ROOT)/out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
 $(SHELLCHECK_BIN):
 	mkdir -p $(LINT_ROOT)/out/linters
@@ -44,7 +44,7 @@ shellcheck-fix: $(SHELLCHECK_BIN)
 {{ end -}}
 
 {{ if .Dockerfile -}}
-HADOLINT_VERSION ?= v2.12.1-beta
+HADOLINT_VERSION ?= v2.14.0
 HADOLINT_BIN := $(LINT_ROOT)/out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 $(HADOLINT_BIN):
 	mkdir -p $(LINT_ROOT)/out/linters
@@ -61,7 +61,7 @@ hadolint-lint: $(HADOLINT_BIN)
 
 {{ if .Go -}}
 GOLANGCI_LINT_CONFIG := $(LINT_ROOT)/.golangci.yml
-GOLANGCI_LINT_VERSION ?= v2.5.0
+GOLANGCI_LINT_VERSION ?= v2.7.2
 GOLANGCI_LINT_BIN := $(LINT_ROOT)/out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)
 $(GOLANGCI_LINT_BIN):
 	mkdir -p $(LINT_ROOT)/out/linters
@@ -96,7 +96,7 @@ yamllint-lint: $(YAMLLINT_BIN)
 {{ end -}}
 
 {{ if .Web -}}
-BIOME_VERSION ?= 2.2.6
+BIOME_VERSION ?= 2.3.8
 BIOME_BIN := $(LINT_ROOT)/out/linters/biome-$(BIOME_VERSION)-$(LINT_ARCH)
 BIOME_CONFIG := $(LINT_ROOT)/biome.json
 

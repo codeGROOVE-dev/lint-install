@@ -25,7 +25,7 @@ endif
 LINTERS :=
 FIXERS :=
 
-SHELLCHECK_VERSION ?= v0.10.0
+SHELLCHECK_VERSION ?= v0.11.0
 SHELLCHECK_BIN := $(LINT_ROOT)/out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
 $(SHELLCHECK_BIN):
 	mkdir -p $(LINT_ROOT)/out/linters
@@ -45,7 +45,7 @@ FIXERS += shellcheck-fix
 shellcheck-fix: $(SHELLCHECK_BIN)
 	$(SHELLCHECK_BIN) $(shell find . -name "*.sh") -f diff | { read -t 1 line || exit 0; { echo "$$line" && cat; } | git apply -p2; }
 
-HADOLINT_VERSION ?= v2.12.1-beta
+HADOLINT_VERSION ?= v2.14.0
 HADOLINT_BIN := $(LINT_ROOT)/out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 $(HADOLINT_BIN):
 	mkdir -p $(LINT_ROOT)/out/linters
@@ -59,7 +59,7 @@ hadolint-lint: $(HADOLINT_BIN)
 	$(HADOLINT_BIN) $(shell find . -name "*Dockerfile")
 
 GOLANGCI_LINT_CONFIG := $(LINT_ROOT)/.golangci.yml
-GOLANGCI_LINT_VERSION ?= v2.5.0
+GOLANGCI_LINT_VERSION ?= v2.7.2
 GOLANGCI_LINT_BIN := $(LINT_ROOT)/out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)
 $(GOLANGCI_LINT_BIN):
 	mkdir -p $(LINT_ROOT)/out/linters
@@ -88,7 +88,7 @@ LINTERS += yamllint-lint
 yamllint-lint: $(YAMLLINT_BIN)
 	PYTHONPATH=$(YAMLLINT_ROOT)/dist $(YAMLLINT_ROOT)/dist/bin/yamllint .
 
-BIOME_VERSION ?= 2.2.6
+BIOME_VERSION ?= 2.3.8
 BIOME_BIN := $(LINT_ROOT)/out/linters/biome-$(BIOME_VERSION)-$(LINT_ARCH)
 BIOME_CONFIG := $(LINT_ROOT)/biome.json
 
