@@ -261,17 +261,29 @@ func goLintCmd(root string, level string, fix bool) string {
 		klog.Errorf("unable to find go.mod files: %v", err)
 	}
 
-	suffix := ""
+	cmd := `"$(GOLANGCI_LINT_BIN)" run -c "$(GOLANGCI_LINT_CONFIG)"`
 	if fix {
-		suffix = " --fix"
-	} else if level == "warn" {
-		suffix = " || true"
+		cmd += " --fix"
+	}
+
+	// `find ... -execdir <cmd> \;` always exits 0 even when <cmd> fails (notably
+	// on BSD/macOS find), so a lint failure never propagates to make. Iterate
+	// over the modules in the shell and accumulate the exit status explicitly so
+	// the lint target fails when golangci-lint reports issues. Fix mode and the
+	// "warn" level must never fail the build, so they swallow per-module errors.
+	onFail := "exit_code=1"
+	if fix || level == "warn" {
+		onFail = "true"
 	}
 
 	klog.Infof("found %d modules within %s: %s", len(found), root, found)
 	return fmt.Sprintf(
-		`find . -name go.mod -execdir "$(GOLANGCI_LINT_BIN)" run -c "$(GOLANGCI_LINT_CONFIG)"%s \;`,
-		suffix,
+		"@exit_code=0; \\\n"+
+			"\tfor gomod in $$(find . -name go.mod); do \\\n"+
+			"\t\t(cd \"$$(dirname \"$$gomod\")\" && %s) || %s; \\\n"+
+			"\tdone; \\\n"+
+			"\texit $$exit_code",
+		cmd, onFail,
 	)
 }
 

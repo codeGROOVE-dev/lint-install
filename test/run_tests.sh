@@ -75,8 +75,11 @@ run_test "biome" "make biome-lint" "should_fail"
 # Test 4: Yamllint should catch issues in test.yaml
 run_test "yamllint" "make yamllint-lint" "should_fail"
 
-# Test 5: Golangci-lint should catch issues in test/test_main.go
-run_test "golangci-lint" "cd test && make golangci-lint-lint" "should_fail"
+# Test 5: Golangci-lint should catch issues in test/test_main.go.
+# Run from test/ via the root Makefile so `find . -name go.mod` is scoped to the
+# test module; this also verifies the recipe propagates golangci-lint's exit code
+# (a plain `find -execdir` always exits 0, masking failures).
+run_test "golangci-lint" "cd test && make -f ../Makefile golangci-lint-lint" "should_fail"
 
 echo ""
 echo "=========================================="
